@@ -47,7 +47,7 @@ namespace IrBuilder.Api.Controllers
                 string logoExt = Path.GetExtension(request.LogoFile.FileName ?? ".png");
                 string logoBlobPath = $"assets/logo{logoExt}";
 
-                 logoUrl = await _blobStorageService.UploadFileAsync(
+                logoUrl = await _blobStorageService.UploadFileAsync(
                     request.LogoFile,
                     containerName: containerName,
                     filePrefix: logoBlobPath
@@ -99,7 +99,7 @@ namespace IrBuilder.Api.Controllers
             _logger.LogInformation($"{dbName} created and database seed completed successfully.");
 
             // 5. Orchestration: Build images on-demand & spin up local containers
-            var deployment = await _dockerDeployService.DeployCompanyContainersAsync(containerName, dbName, configUrl!);
+            var deployment = await _dockerDeployService.DeployCompanyContainersAsync(containerName, dbName, configUrl!, request.Company.CompanyName);
 
             // 6. Return live URL for dashboard navigation
             return Ok(new

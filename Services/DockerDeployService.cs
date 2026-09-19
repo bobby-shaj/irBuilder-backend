@@ -22,7 +22,7 @@ namespace IrBuilder.Api.Services
         }
 
         // Standard base images pushed by 
-        public async Task<DeployedIrAppResult> DeployCompanyContainersAsync(string ticker, string dbName, string configUrl)
+        public async Task<DeployedIrAppResult> DeployCompanyContainersAsync(string ticker, string dbName, string configUrl, string companyName)
         {
             string cleanTicker = ticker.ToLowerInvariant();
 
@@ -77,7 +77,9 @@ namespace IrBuilder.Api.Services
                 envVars: new[]
                 {
                     $"ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database={dbName};User Id=sa;Password=Bshaj_1978;TrustServerCertificate=True;",
-                    $"TICKER_SYMBOL={cleanTicker}",
+                    $"CompanySettings__TickerSymbol={cleanTicker}",
+                    $"CompanySettings__CompanyName={companyName}",
+                    $"CdnSettings__BaseUrl=http://127.0.0.1:10010/devstoreaccount1",
                     $"CONFIG_URL={configUrl}"
                 }
             );
