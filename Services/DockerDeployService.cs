@@ -1,5 +1,5 @@
 ﻿using Docker.DotNet;
-using ICSharpCode.SharpZipLib.Tar;
+using System.Runtime.InteropServices;
 using IrBuilder.Api.Services.Interfaces;
 using IrBuilder.Api.Helpers;
 using Docker.DotNet.Models;
@@ -18,8 +18,39 @@ namespace IrBuilder.Api.Services
         {
             _env = env;
             _logger = logger;
-            _dockerClient = new DockerClientConfiguration().CreateClient();
+            _dockerClient = CreateCrossPlatformDockerClient();
         }
+        
+        private static DockerClient CreateCrossPlatformDockerClient()
+        {
+            DockerClientConfiguration config;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // Windows Docker Engine Pipe
+                config = new DockerClientConfiguration(new Uri("npipe://./pipe/docker_engine"));
+            }
+            else
+            {
+                // macOS / Linux Unix Socket
+                string socketPath = "/var/run/docker.sock";
+
+                // Fallback for user-level Docker Desktop sockets on macOS
+                string userSocketPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                    ".docker", "run", "docker.sock"
+                );
+
+                if (!File.Exists(socketPath) && File.Exists(userSocketPath))
+                {
+                    socketPath = userSocketPath;
+                }
+
+                config = new DockerClientConfiguration(new Uri($"unix://{socketPath}"));
+            }
+
+            return config.CreateClient();
+        }        
 
         // Standard base images pushed by 
         public async Task<DeployedIrAppResult> DeployCompanyContainersAsync(string ticker, string dbName, string configUrl, string companyName)
@@ -79,7 +110,7 @@ namespace IrBuilder.Api.Services
                     $"ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database={dbName};User Id=sa;Password=Bshaj_1978;TrustServerCertificate=True;",
                     $"CompanySettings__TickerSymbol={cleanTicker}",
                     $"CompanySettings__CompanyName={companyName}",
-                    $"CdnSettings__BaseUrl=http://127.0.0.1:10010/devstoreaccount1",
+                    $"CdnSettings__BaseUrl=http://127.0.0.1:10000/devstoreaccount1",
                     $"CONFIG_URL={configUrl}"
                 }
             );
@@ -93,7 +124,7 @@ namespace IrBuilder.Api.Services
                 envVars: new[]
                 {
                     $"API_URL=http://localhost:{backendHostPort}/api",
-                    $"CDN_URL=http://127.0.0.1:10010/devstoreaccount1",
+                    $"CDN_URL=http://127.0.0.1:10000/devstoreaccount1",
                     $"CONFIG_URL={configUrl}"
                 }
             );

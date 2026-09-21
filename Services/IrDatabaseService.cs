@@ -2,6 +2,7 @@
 using IrBuilder.Api.Services.Interfaces;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Text.RegularExpressions;
 
 namespace IrBuilder.Api.Services;
 
@@ -53,7 +54,8 @@ public class IrDatabaseService : IIrDatabaseService
 
     private async Task ExecuteSchemaScriptAsync(string connectionString)
     {
-        string scriptPath = Path.Combine(_env.ContentRootPath, "Scripts", "IrSchema.sql");
+        string scriptPath = Path.Combine(_env.ContentRootPath, "Scripts", "CreateIrDb.sql");
+    
         if (!File.Exists(scriptPath))
         {
             throw new FileNotFoundException($"Schema script not found at {scriptPath}");
@@ -61,21 +63,29 @@ public class IrDatabaseService : IIrDatabaseService
 
         string scriptContent = await File.ReadAllTextAsync(scriptPath);
 
+        // Regex explanation:
+        // (?m)          = Multiline mode (^ and $ match start/end of individual lines)
+        // ^\s*GO\s*$    = Matches lines containing ONLY "GO" (case-insensitive), ignoring carriage returns, newlines, and surrounding spaces.
+        string[] sqlStatements = Regex.Split(
+            scriptContent, 
+            @"(?m)^\s*GO\s*$", 
+            RegexOptions.IgnoreCase
+        );
+
         using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync();
 
-        // Split by 'GO' statements in case SSMS script includes batch separators
-        string[] sqlStatements = scriptContent.Split(new[] { "\nGO", "\ngo", "\nGo", "\ngO" }, StringSplitOptions.RemoveEmptyEntries);
-
         foreach (var statement in sqlStatements)
         {
-            if (string.IsNullOrWhiteSpace(statement)) continue;
+            string trimmedStatement = statement.Trim();
+            if (string.IsNullOrWhiteSpace(trimmedStatement)) continue;
 
-            using var command = new SqlCommand(statement, connection);
+            using var command = new SqlCommand(trimmedStatement, connection);
+            command.CommandTimeout = 120; // Allows time for larger seed batches
             await command.ExecuteNonQueryAsync();
         }
     }
-
+    
     private async Task SeedDataWithStoredProceduresAsync(string connectionString, PublishIrAppRequest request)
     {
         using var connection = new SqlConnection(connectionString);
