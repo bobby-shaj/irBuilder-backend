@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IIrDatabaseService, IrDatabaseService>();
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 builder.Services.AddScoped<IDockerDeployService, DockerDeployService>();
+builder.Services.AddScoped<AssetUploadService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

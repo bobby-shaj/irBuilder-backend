@@ -11,14 +11,17 @@ namespace IrBuilder.Api.Services
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<DockerDeployService> _logger;
         private readonly DockerClient _dockerClient;
+        private readonly string _cdnBaseUrl;
 
         public DockerDeployService(
             IWebHostEnvironment env,
+            IConfiguration config,
             ILogger<DockerDeployService> logger)
         {
             _env = env;
             _logger = logger;
             _dockerClient = CreateCrossPlatformDockerClient();
+            _cdnBaseUrl = config["CdnSettings__BaseUrl"] ?? "http://127.0.0.1:10000/devstoreaccount1";
         }
         
         private static DockerClient CreateCrossPlatformDockerClient()
@@ -110,7 +113,7 @@ namespace IrBuilder.Api.Services
                     $"ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database={dbName};User Id=sa;Password=Bshaj_1978;TrustServerCertificate=True;",
                     $"CompanySettings__TickerSymbol={cleanTicker}",
                     $"CompanySettings__CompanyName={companyName}",
-                    $"CdnSettings__BaseUrl=http://127.0.0.1:10000/devstoreaccount1",
+                    $"CdnSettings__BaseUrl={_cdnBaseUrl}",
                     $"CONFIG_URL={configUrl}"
                 }
             );
@@ -124,7 +127,7 @@ namespace IrBuilder.Api.Services
                 envVars: new[]
                 {
                     $"API_URL=http://localhost:{backendHostPort}/api",
-                    $"CDN_URL=http://127.0.0.1:10000/devstoreaccount1",
+                    $"CDN_URL={_cdnBaseUrl}",
                     $"CONFIG_URL={configUrl}"
                 }
             );

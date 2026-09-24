@@ -13,17 +13,20 @@ namespace IrBuilder.Api.Controllers
         private readonly IIrDatabaseService _databaseService;
         private readonly IBlobStorageService _blobStorageService;
         private readonly IDockerDeployService _dockerDeployService;
+        private readonly AssetUploadService _assetUploadService;
 
         public BuilderController(
             ILogger<BuilderController> logger, 
             IIrDatabaseService irDatabaseService,
             IBlobStorageService blobStorageService,
-            IDockerDeployService dockerDeployService)
+            IDockerDeployService dockerDeployService,
+            AssetUploadService assetUploadService)
         {
             _logger = logger;
             _databaseService = irDatabaseService;
             _blobStorageService = blobStorageService;
             _dockerDeployService = dockerDeployService;
+            _assetUploadService = assetUploadService;
         }
 
         [HttpPost("publish")]
@@ -84,7 +87,8 @@ namespace IrBuilder.Api.Controllers
                 TickerSymbol = request.Company.TickerSymbol,
                 PrimaryColor = request.Branding.PrimaryColor,
                 SecondaryColor = request.Branding.SecondaryColor,
-                LogoUrl = logoUrl
+                LogoUrl = logoUrl,
+                MainMenu = request.MainMenu,
             };
 
             string? configUrl = await _blobStorageService.UploadJsonAsync(
@@ -93,6 +97,8 @@ namespace IrBuilder.Api.Controllers
                 filePrefix: "config.json"
             );
 
+            // Upload `assets/images` files to CDN
+            await _assetUploadService.UploadTenantAssetsAsync(request.Company.TickerSymbol.ToLower());
 
             // 4. Provision & Seed Database 
             string dbName = await _databaseService.ProvisionAndSeedDatabaseAsync(request);

@@ -8,5 +8,6 @@
         public string SecondaryColor { get; set; } = string.Empty;
         public string? LogoUrl { get; set; }
         public DateTime PublishedAt { get; set; } = DateTime.UtcNow;
+        public List<NavItemDto> MainMenu { get; set; } = new();
     }
 }

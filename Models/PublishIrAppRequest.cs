@@ -1,8 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace IrBuilder.Api.Models
 {
+    public class NavItemDto
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
+    }
+
     public class PublishIrAppRequest
     {
         [Required]
@@ -13,6 +18,7 @@ namespace IrBuilder.Api.Models
 
         public IFormFile? LogoFile { get; set; }
         public List<PresentationDto> Presentations { get; set; } = new();
+        public List<NavItemDto> MainMenu { get; set; } = new();
     }
 
     public class CompanyDto
