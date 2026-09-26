@@ -1,10 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace IrBuilder.Api.Models
 {
     public class NavItemDto
     {
+        [JsonPropertyName("title")]
         public string Title { get; set; } = string.Empty;
+        [JsonPropertyName("url")]
         public string Url { get; set; } = string.Empty;
     }
 
